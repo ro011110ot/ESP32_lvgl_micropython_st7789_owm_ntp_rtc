@@ -1,13 +1,12 @@
 """
-main.py - Main program for ESP32 Weather Station with LVGL
-Coordinates display, WiFi, NTP, and sensor data.
+main.py - Hauptprogramm für ESP32 Wetterstation mit LVGL
+Koordiniert Display, WLAN, NTP und Sensordaten
 """
 
 # Standard Library
 import utime
 import gc
 import lvgl as lv
-import sys
 
 # Local Application
 from ntp import set_rtc_from_ntp
@@ -18,139 +17,132 @@ import display_setup
 import display
 
 
-def main() -> None:
+def main():
     """
-    Main entry point and logic for the application.
+    Haupteinstiegspunkt und Logik für die Anwendung.
     """
     print("\n" + "=" * 50)
-    print("ESP32 Weather Station with LVGL started")
+    print("ESP32 Wetterstation mit LVGL gestartet")
     print("=" * 50 + "\n")
 
     # ========================================
-    # STEP 1: Initialize Display Hardware
+    # SCHRITT 1: Display-Hardware initialisieren
     # ========================================
-    print("[1/6] Initializing display hardware...")
+    print("[1/6] Initialisiere Display-Hardware...")
     if not display_setup.init_display_driver():
-        print("FATAL: Display hardware error!")
-        print("Check SPI wiring and pins.")
+        print("FATAL: Display-Hardwarefehler!")
+        print("Prüfe SPI-Verkabelung und Pins.")
         return
 
-    print("✓ Display hardware OK\n")
+    print("✓ Display-Hardware OK\n")
     gc.collect()
 
     # ========================================
-    # STEP 2: Create LVGL UI
+    # SCHRITT 2: LVGL UI erstellen
     # ========================================
-    print("[2/6] Creating user interface...")
+    print("[2/6] Erstelle Benutzeroberfläche...")
     try:
         display.create_ui()
-        print("✓ UI created and initialized\n")
+        print("✓ UI erstellt und initialisiert\n")
     except Exception as e:
-        print(f"FATAL: UI error: {e}")
+        print(f"FATAL: UI-Fehler: {e}")
         return
 
     gc.collect()
 
     # ========================================
-    # STEP 3: WiFi Connection
+    # SCHRITT 3: WLAN-Verbindung
     # ========================================
-    print("[3/6] Connecting to WiFi...")
+    print("[3/6] Verbinde mit WLAN...")
     connect_wifi()
 
     if not is_connected():
-        print("WARNING: No WiFi connection!")
-        print("Showing time only (without NTP sync).")
-        print("Weather data not available.\n")
-        # Continue without WiFi - at least shows the time
+        print("WARNUNG: Keine WLAN-Verbindung!")
+        print("Zeige nur Uhrzeit (ohne NTP-Sync).")
+        print("Wetterdaten nicht verfügbar.\n")
+        # Weiter ohne WLAN - zeigt zumindest die Zeit
     else:
-        print("✓ WiFi connected\n")
+        print("✓ WLAN verbunden\n")
 
     gc.collect()
 
     # ========================================
-    # STEP 4: NTP Time Synchronization
+    # SCHRITT 4: NTP-Zeit synchronisieren
     # ========================================
     if is_connected():
-        print("[4/6] Synchronizing time via NTP...")
+        print("[4/6] Synchronisiere Zeit via NTP...")
         try:
             set_rtc_from_ntp()
-            print("✓ Time synchronized\n")
+            print("✓ Zeit synchronisiert\n")
         except Exception as e:
-            print(f"WARNING: NTP sync failed: {e}")
-            print("Using system time.\n")
+            print(f"WARNUNG: NTP-Sync fehlgeschlagen: {e}")
+            print("Verwende System-Zeit.\n")
     else:
-        print("[4/6] Skipping NTP (no WiFi)\n")
+        print("[4/6] Überspringe NTP (kein WLAN)\n")
 
     gc.collect()
 
     # ========================================
-    # STEP 5: Start Hardware Timers
+    # SCHRITT 5: Hardware-Timer starten
     # ========================================
-    print("[5/6] Starting hardware timers...")
+    print("[5/6] Starte Hardware-Timer...")
     try:
         start_timer_tasks()
-        print("✓ Timers started:")
-        print("  - Display update: every 1s")
-        print("  - Weather update: every 15min\n")
+        print("✓ Timer gestartet:")
+        print("  - Display-Update: alle 1s")
+        print("  - Wetter-Update: alle 15min\n")
     except Exception as e:
-        print(f"FATAL: Timer error: {e}")
+        print(f"FATAL: Timer-Fehler: {e}")
         return
 
     gc.collect()
 
     # ========================================
-    # STEP 6: Main Loop
+    # SCHRITT 6: Hauptschleife
     # ========================================
-    print("[6/6] Starting main loop...")
+    print("[6/6] Starte Hauptschleife...")
     print("=" * 50)
-    print("System running! Press CTRL+C to exit.")
+    print("System läuft! Drücke CTRL+C zum Beenden.")
     print("=" * 50 + "\n")
 
     loop_counter = 0
 
     try:
         while True:
-            # Run system tasks (WiFi monitoring, etc.)
+            # System-Tasks ausführen (WiFi-Überwachung, etc.)
             run_system_tasks()
 
-            # LVGL task handler for event processing
-            lv.task_handler()
-
-            # Short pause
-            utime.sleep_ms(50)
-
-            # Memory info every 10 seconds
-            loop_counter += 1
-            if loop_counter >= 200:  # 200 * 50ms = 10s
-                mem_free = gc.mem_free()
-                print(f"[INFO] Free memory: {mem_free} Bytes")
-                loop_counter = 0
-                gc.collect()
+            # Kurze Pause - LVGL wird vom Timer aktualisiert
+            utime.sleep_ms(100)
 
     except KeyboardInterrupt:
         print("\n" + "=" * 50)
-        print("Program terminated by user (CTRL+C)")
+        print("Programm durch Benutzer beendet (CTRL+C)")
         print("=" * 50)
 
     except Exception as e:
         print("\n" + "=" * 50)
-        print("FATAL: Unexpected error in main loop:")
+        print(f"FATAL: Unerwarteter Fehler in Hauptschleife:")
         print(f"  {e}")
         print("=" * 50)
+        import sys
+
         sys.print_exception(e)
 
 
 # ========================================
-# PROGRAM START
+# PROGRAMMSTART
 # ========================================
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
         print("\n" + "=" * 50)
-        print("CRITICAL ERROR ON STARTUP:")
+        print("KRITISCHER FEHLER BEIM START:")
         print(f"  {e}")
         print("=" * 50)
+        import sys
+
         sys.print_exception(e)
     finally:
-        print("\nProgram terminated.")
+        print("\nProgramm beendet.")
