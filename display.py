@@ -1,101 +1,101 @@
 """
-display.py - Komplette LVGL Display-Verwaltung für ESP32
-display.py - Komplette LVGL Display-Verwaltung für ESP32 Wetterstation
-Verwaltet die Benutzeroberfläche und aktualisiert Zeit- und Wetterdaten
+display.py - Complete LVGL Display Management for ESP32 Weather Station
+Manages the user interface and updates time and weather data.
 """
 
 # Standard Library
 import utime as time
 import gc
 import lvgl as lv
+from typing import Tuple, Optional, Any
 
-# --- Globale Variablen für den Zustand ---
-weather_data = (None,) * 6
-main_screen = None
+# --- Global State Variables ---
+weather_data: Tuple[Optional[float], ...] = (None,) * 6
+main_screen: Optional[lv.obj] = None
 
-# Globale Variablen für alle LVGL-Objekte
-desc_label_obj = None
-temp_label_obj = None
-press_label_obj = None
-hum_label_obj = None
-wind_label_obj = None
-date_label_obj = None
-time_label_obj = None
+# Global variables for all LVGL objects
+desc_label_obj: Optional[lv.label] = None
+temp_label_obj: Optional[lv.label] = None
+press_label_obj: Optional[lv.label] = None
+hum_label_obj: Optional[lv.label] = None
+wind_label_obj: Optional[lv.label] = None
+date_label_obj: Optional[lv.label] = None
+time_label_obj: Optional[lv.label] = None
 
 
-def set_weather_data(data):
+def set_weather_data(data: Tuple[Optional[float], ...]) -> None:
     """
-    Setzt neue Wetterdaten und aktualisiert sofort die Anzeige.
+    Sets new weather data and immediately updates the display.
 
     Args:
-        data: Tuple mit (temp, pressure, humidity, wind, _, description)
+        data: Tuple with (temp, pressure, humidity, wind, _, description)
     """
     global weather_data
     weather_data = data
-    # Sofort anzeigen, nicht auf Timer warten
+    # Update display immediately, don't wait for the timer
     oled_update_weather()
 
 
-def create_ui():
+def create_ui() -> None:
     """
-    Erstellt die komplette Benutzeroberfläche mit allen Labels.
+    Creates the complete user interface with all labels.
     """
     global main_screen
     global desc_label_obj, temp_label_obj, press_label_obj, hum_label_obj, wind_label_obj
     global date_label_obj, time_label_obj
 
-    # Hauptbildschirm erstellen
+    # Create main screen
     main_screen = lv.obj()
     main_screen.set_style_bg_color(lv.color_hex(0x000000), 0)
     lv.screen_load(main_screen)
 
-    # === DATUM LABEL ===
+    # === DATE LABEL ===
     date_label_obj = lv.label(main_screen)
     date_label_obj.set_text("--.--.----")
     date_label_obj.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
-    date_label_obj.align(lv.ALIGN.TOP_MID, 0, 20)  # Von 5 auf 20 erhöht
+    date_label_obj.align(lv.ALIGN.TOP_MID, 0, 20)  # Increased from 5 to 20
 
-    # === ZEIT LABEL ===
+    # === TIME LABEL ===
     time_label_obj = lv.label(main_screen)
     time_label_obj.set_text("--:--:--")
     time_label_obj.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
-    time_label_obj.align(lv.ALIGN.TOP_MID, 0, 45)  # Von 30 auf 45 angepasst
+    time_label_obj.align(lv.ALIGN.TOP_MID, 0, 45)  # Adjusted from 30 to 45
 
-    # === TRENNLINIE ===
+    # === SEPARATOR LINE ===
     line = lv.obj(main_screen)
     line.set_size(lv.pct(90), 2)
     line.set_style_bg_color(lv.color_hex(0xAAAAAA), 0)
     line.set_style_border_width(0, 0)
     line.align(lv.ALIGN.TOP_MID, 0, 85)
 
-    # === TITEL ===
+    # === TITLE ===
     title_label = lv.label(main_screen)
-    title_label.set_text("Wetter (OpenWeatherMap):")
+    title_label.set_text("Weather (OpenWeatherMap):")
     title_label.set_style_text_color(lv.color_hex(0x00AAFF), 0)
     title_label.align(lv.ALIGN.TOP_LEFT, 10, 100)
 
-    # === WETTER-LABELS ===
+    # === WEATHER LABELS ===
     desc_label_obj = lv.label(main_screen)
-    desc_label_obj.set_text("Lade Daten...")
+    desc_label_obj.set_text("Loading data...")
     desc_label_obj.set_style_text_color(lv.color_hex(0xFFFF00), 0)
 
     temp_label_obj = lv.label(main_screen)
-    temp_label_obj.set_text("Temperatur: ---")
+    temp_label_obj.set_text("Temperature: ---")
     temp_label_obj.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
 
     press_label_obj = lv.label(main_screen)
-    press_label_obj.set_text("Druck: ---")
+    press_label_obj.set_text("Pressure: ---")
     press_label_obj.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
 
     hum_label_obj = lv.label(main_screen)
-    hum_label_obj.set_text("Feuchte: ---")
+    hum_label_obj.set_text("Humidity: ---")
     hum_label_obj.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
 
     wind_label_obj = lv.label(main_screen)
     wind_label_obj.set_text("Wind: ---")
     wind_label_obj.set_style_text_color(lv.color_hex(0xFFFFFF), 0)
 
-    # Labels positionieren
+    # Position labels
     labels_list = [
         desc_label_obj,
         temp_label_obj,
@@ -111,18 +111,18 @@ def create_ui():
 
     gc.collect()
 
-    # WICHTIG: Initiale Werte sofort setzen
+    # IMPORTANT: Set initial values immediately
     oled_update_time()
     oled_update_weather()
 
-    # LVGL Task Handler einmal aufrufen
+    # Call LVGL task handler once
     lv.task_handler()
 
 
-def oled_update_time():
+def oled_update_time() -> None:
     """
-    Aktualisiert die Labels für Zeit und Datum.
-    Wird jede Sekunde vom Timer aufgerufen.
+    Updates the time and date labels.
+    Called every second by the timer.
     """
     if date_label_obj is None or time_label_obj is None:
         return
@@ -135,18 +135,18 @@ def oled_update_time():
         date_label_obj.set_text(date_str)
         time_label_obj.set_text(time_str)
 
-        # Display-Objekte als "dirty" markieren (neu zeichnen)
+        # Mark display objects as "dirty" (redraw)
         date_label_obj.invalidate()
         time_label_obj.invalidate()
 
     except Exception as e:
-        print(f"FEHLER in oled_update_time: {e}")
+        print(f"ERROR in oled_update_time: {e}")
 
 
-def oled_update_weather():
+def oled_update_weather() -> None:
     """
-    Aktualisiert die Labels für die Wetterdaten.
-    Wird bei neuen Daten und vom Timer aufgerufen.
+    Updates the weather data labels.
+    Called when new data is available and by the timer.
     """
     if main_screen is None or desc_label_obj is None:
         return
@@ -154,16 +154,16 @@ def oled_update_weather():
     try:
         data = weather_data
 
-        # Prüfen ob alle Daten vorhanden sind
+        # Check if all data is available
         if data and all(val is not None for val in data):
             # Format: (temp, pressure, humidity, wind, _, description)
             desc_label_obj.set_text(str(data[5]))
-            temp_label_obj.set_text(f"Temperatur: {data[0]:.1f} °C")
-            press_label_obj.set_text(f"Druck: {data[1]} hPa")
-            hum_label_obj.set_text(f"Feuchte: {data[2]:.1f} %")
+            temp_label_obj.set_text(f"Temperature: {data[0]:.1f} °C")
+            press_label_obj.set_text(f"Pressure: {data[1]} hPa")
+            hum_label_obj.set_text(f"Humidity: {data[2]:.1f} %")
             wind_label_obj.set_text(f"Wind: {data[3]:.1f} m/s")
 
-            # Alle Wetter-Labels als "dirty" markieren
+            # Mark all weather labels as "dirty"
             desc_label_obj.invalidate()
             temp_label_obj.invalidate()
             press_label_obj.invalidate()
@@ -171,53 +171,53 @@ def oled_update_weather():
             wind_label_obj.invalidate()
 
         else:
-            # Fallback wenn keine Daten verfügbar
-            desc_label_obj.set_text("Keine Wetterdaten")
-            temp_label_obj.set_text("Temperatur: ---")
-            press_label_obj.set_text("Druck: WLAN pruefen")
-            hum_label_obj.set_text("Feuchte: ---")
+            # Fallback if no data is available
+            desc_label_obj.set_text("No weather data")
+            temp_label_obj.set_text("Temperature: ---")
+            press_label_obj.set_text("Pressure: Check WLAN")
+            hum_label_obj.set_text("Humidity: ---")
             wind_label_obj.set_text("Wind: ---")
 
     except Exception as e:
-        print(f"FEHLER in oled_update_weather: {e}")
+        print(f"ERROR in oled_update_weather: {e}")
         if desc_label_obj:
-            desc_label_obj.set_text(f"Fehler: {str(e)[:20]}")
+            desc_label_obj.set_text(f"Error: {str(e)[:20]}")
 
 
-def display_handler(timer=None):
+def display_handler(timer: Optional[Any] = None) -> None:
     """
-    Timer-Callback. Aktualisiert alle Daten auf dem Display.
-    Wird jede Sekunde aufgerufen.
+    Timer callback. Updates all data on the display.
+    Called every second.
 
     Args:
-        timer: Timer-Objekt (wird ignoriert)
+        timer: Timer object (ignored)
     """
     try:
         oled_update_time()
         oled_update_weather()
 
-        # KRITISCH: LVGL muss das Display neu zeichnen
+        # CRITICAL: LVGL needs to redraw the display
         lv.refr_now(None)
 
     except Exception as e:
-        print(f"FEHLER in display_handler: {e}")
+        print(f"ERROR in display_handler: {e}")
 
 
-def get_weather_data():
+def get_weather_data() -> Tuple[Optional[float], ...]:
     """
-    Gibt die aktuellen Wetterdaten zurück.
+    Returns the current weather data.
 
     Returns:
-        Tuple mit (temp, pressure, humidity, wind, _, description)
+        Tuple with (temp, pressure, humidity, wind, _, description)
     """
     return weather_data
 
 
-def clear_display():
+def clear_display() -> None:
     """
-    Setzt alle Anzeigen auf Standardwerte zurück.
+    Resets all display elements to their default values.
     """
     global weather_data
     weather_data = (None,) * 6
     oled_update_weather()
-    print("Display zurueckgesetzt")
+    print("Display reset")
