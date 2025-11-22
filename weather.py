@@ -34,12 +34,12 @@ def get_data():
         response.close()
 
         # --- Parse the JSON response ---
-        temp = weather_json['main']['temp']
-        pressure = weather_json['main']['pressure']
-        humidity = weather_json['main']['humidity']
-        wind_speed = weather_json['wind']['speed']
-        wind_deg = weather_json['wind']['deg']
-        weather_desc = weather_json['weather'][0]['description']
+        temp = weather_json["main"]["temp"]
+        pressure = weather_json["main"]["pressure"]
+        humidity = weather_json["main"]["humidity"]
+        wind_speed = weather_json["wind"]["speed"]
+        wind_deg = weather_json["wind"]["deg"]
+        weather_desc = weather_json["weather"][0]["description"]
 
         print("Weather data successfully retrieved.")
         return temp, pressure, humidity, wind_speed, wind_deg, weather_desc
