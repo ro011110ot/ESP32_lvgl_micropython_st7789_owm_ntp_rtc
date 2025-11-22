@@ -1,2 +1,5 @@
-# Firmware files
-firmware/
+/__pycache__
+/.idea
+/.git
+/temp_history/
+/secrets.py
