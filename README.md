@@ -35,7 +35,7 @@ This project transforms an ESP32 into a weather station using a ST7789 display w
 
 ## Setup
 
-1.  **Install MicroPython:** Flash your ESP32 with a recent version of MicroPython that includes LVGL bindings. You can find suitable firmware on the [LVGL MicroPython repository](https://github.com/lvgl/lv_micropython).
+1.  **Install MicroPython with LVGL & ST7789 Driver:** Flash your ESP32 with a recent version of MicroPython that includes LVGL bindings. You can find a Firmare  for the ESP32_GENERIC under /firmware or you can compile it with the [LVGL MicroPython repository]([https://github.com/lvgl/lv_micropython](https://github.com/lvgl-micropython/lvgl_micropython)).
 2.  **Copy Project Files:** Upload all the `.py` files from this project to the root directory of your ESP32's filesystem.
 3.  **Create `secrets.py`:** Create a file named `secrets.py` in the root directory with the following structure. You can add multiple Wi-Fi networks; the system will attempt to connect to them in order.
 
@@ -61,7 +61,15 @@ This project transforms an ESP32 into a weather station using a ST7789 display w
 5.  **Run:** The `main.py` script will run automatically on boot, starting the weather station.
 
 ## How it Works
-
+    secrets = {
+        "wifi_credentials": [
+            {"ssid": "YOUR_WIFI_SSID", "password": "YOUR_WIFI_PASSWORD"},
+            # {"ssid": "ANOTHER_SSID", "password": "ANOTHER_PASSWORD"},
+        ],
+        "openweather_api_key": "YOUR_OPENWEATHERMAP_API_KEY",
+        "city": "YourCity",
+        "country_code": "DE"  # Your two-letter country code
+    }
 The application starts with `main.py`, which orchestrates the setup process in several steps:
 1.  **Display Initialization**: `display_setup.init_display_driver()` sets up the SPI bus and the ST7789 driver.
 2.  **UI Creation**: `display.create_ui()` builds the LVGL interface, creating labels for time, date, and weather information.
