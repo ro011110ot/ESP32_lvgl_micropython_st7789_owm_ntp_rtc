@@ -1,14 +1,15 @@
 # Datei: display_setup.py (Neu)
 
-import lcd_bus
-import machine
-import st7789
-import lvgl as lv
 import gc
 
+import lcd_bus
+import lvgl as lv
+import machine
+import st7789
+
 # --- PIN-DEFINITIONEN ---
-_WIDTH = 240
-_HEIGHT = 320
+_WIDTH = 240  # War 240, jetzt auf 320 gesetzt
+_HEIGHT = 320  # War 320, jetzt auf 240 gesetzt
 _BL = 17
 _RST = 22
 _DC = 21
@@ -41,6 +42,8 @@ def init_display_driver():
             spi_bus=spi_bus, dc=_DC, cs=_LCD_CS, freq=_LCD_FREQ
         )
 
+        # display_setup.py, in der Funktion init_display_driver()
+
         # S3: ST7789 Treiber instanziieren
         display = st7789.ST7789(
             data_bus=display_bus,
@@ -50,14 +53,18 @@ def init_display_driver():
             reset_pin=_RST,
             reset_state=RESET_STATE_LOW,
             backlight_on_state=BL_STATE_HIGH,
-            color_byte_order=st7789.BYTE_ORDER_BGR,
-            rgb565_byte_swap=True,
+            color_byte_order=st7789.BYTE_ORDER_RGB,  # NEU: RGB statt BGR
+            rgb565_byte_swap=False,  # NEU: Byte-Tausch DEAKTIVIERT (False)
+            # Offsets und Geometrie (Bleibt)
+            offset_x=0,
+            offset_y=0,
         )
-
         # S4: Display initialisieren und rotieren
         display.init()
-        display.set_rotation(2)  # 180° Drehung
+        display.set_rotation(2)  # 180° Drehung (Behalten wir bei)
         display.set_backlight(100)
+
+        # NEU: Farb-Inversion aktivieren (Löst oft fehlerhafte Farbdarstellung/Pixelbrei)
 
         print("LVGL Display-Treiber initialisiert.")
         return True

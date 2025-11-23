@@ -12,7 +12,6 @@ import utime
 # Local Application
 import ntp
 import wifi
-from secrets import secrets
 
 # --- Configuration for Virtual Timers ---
 WLAN_CHECK_INTERVAL_MS = 30000  # 30 seconds

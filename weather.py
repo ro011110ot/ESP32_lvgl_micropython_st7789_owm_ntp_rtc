@@ -1,50 +1,69 @@
 """
-This module provides a function to fetch weather data from the OpenWeatherMap API.
+Dieses Modul ist für das Abrufen und Verarbeiten von Wetterdaten von der OpenWeatherMap-API zuständig.
 """
 
-# Third-Party
-import urequests as requests
+import urequests
 
-# Local Application
 from secrets import secrets
 
-# --- API Configuration ---
-city = secrets["city"]
-country_code = secrets["country_code"]
-api_key = secrets["openweather_api_key"]
+# OpenWeatherMap API-Endpunkt und Konfiguration
+API_URL = "http://api.openweathermap.org/data/2.5/weather?q={},{}&appid={}&units=metric&lang=de"
 
-# Construct the URL with units=metric to get Celsius temperatures and m/s wind speed
-open_weather_map_url = (
-    f"http://api.openweathermap.org/data/2.5/weather?q="
-    f"{city},{country_code}&APPID={api_key}&units=metric"
-)
+# API-Schlüssel und Standort aus der secrets.py-Datei
+API_KEY = secrets["openweather_api_key"]
+CITY = secrets["city"]
+COUNTRY_CODE = secrets["country_code"]
 
 
 def get_data():
     """
-    Fetches and parses weather data from the OpenWeatherMap API.
+    Ruft die aktuellen Wetterdaten von der OpenWeatherMap-API ab.
 
     Returns:
-        A tuple containing (temp, pressure, humidity, wind_speed, wind_deg, weather_desc)
-        on success, or a tuple of Nones on failure.
+        Ein Tuple mit den folgenden Wetterdaten:
+        (Temperatur, Luftdruck, Luftfeuchtigkeit, Windgeschwindigkeit, Wetterbeschreibung, Hauptwetter, Icon-Code).
+        Gibt (None, None, None, None, None, None, None) zurück, wenn ein Fehler auftritt.
     """
+    url = API_URL.format(CITY, COUNTRY_CODE, API_KEY)
+
     try:
-        response = requests.get(open_weather_map_url)
-        weather_json = response.json()
-        response.close()
+        print(f"Fetching weather data from: {url}")
+        response = urequests.get(url)
 
-        # --- Parse the JSON response ---
-        temp = weather_json["main"]["temp"]
-        pressure = weather_json["main"]["pressure"]
-        humidity = weather_json["main"]["humidity"]
-        wind_speed = weather_json["wind"]["speed"]
-        wind_deg = weather_json["wind"]["deg"]
-        weather_desc = weather_json["weather"][0]["description"]
+        if response.status_code == 200:
+            data = response.json()
 
-        print("Weather data successfully retrieved.")
-        return temp, pressure, humidity, wind_speed, wind_deg, weather_desc
+            # Extrahieren der relevanten Daten aus der JSON-Antwort
+            temp = data.get("main", {}).get("temp")
+            pressure = data.get("main", {}).get("pressure")
+            humidity = data.get("main", {}).get("humidity")
+            wind_speed = data.get("wind", {}).get("speed")
+
+            weather_info = data.get("weather", [{}])[0]
+            description = weather_info.get("description")
+            main_weather = weather_info.get("main")
+            icon_code = weather_info.get("icon")
+
+            print("Weather data fetched successfully.")
+            return (
+                temp,
+                pressure,
+                humidity,
+                wind_speed,
+                description,
+                main_weather,
+                icon_code,
+            )
+
+        else:
+            print(
+                f"Error fetching weather data: HTTP Status Code {response.status_code}"
+            )
+            return (None,) * 7
 
     except Exception as e:
-        print(f"Error fetching/parsing weather data: {e}")
-        # Return a tuple of Nones on failure to prevent crashes downstream
-        return None, None, None, None, None, None
+        print(f"An error occurred while fetching weather data: {e}")
+        return (None,) * 7
+    finally:
+        if "response" in locals() and response:
+            response.close()

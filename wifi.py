@@ -81,10 +81,9 @@ def connect_wifi(max_retries=3, retry_delay_s=5, max_wait_s=10):
                 print("    Connection attempt failed.")
                 if attempt < max_retries - 1:
                     time.sleep(retry_delay_s)
-        
+
         wlan.disconnect()
         time.sleep_ms(500)
-
 
     print(f"Failed to connect to any WiFi network after trying all credentials.")
     flash_led(100, 5, 100)  # Failure signal

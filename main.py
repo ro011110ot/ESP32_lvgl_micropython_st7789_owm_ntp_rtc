@@ -3,18 +3,20 @@ main.py - Hauptprogramm für ESP32 Wetterstation mit LVGL
 Koordiniert Display, WLAN, NTP und Sensordaten
 """
 
+import gc
+
+import lvgl as lv
 # Standard Library
 import utime
-import gc
-import lvgl as lv
+from fs_driver import fs_register
 
+import display
+import display_setup
 # Local Application
 from ntp import set_rtc_from_ntp
 from own_timers import start_timer_tasks
 from system_tasks import run_system_tasks
 from wifi import connect_wifi, is_connected
-import display_setup
-import display
 
 
 def main():
@@ -41,6 +43,10 @@ def main():
     # SCHRITT 2: LVGL UI erstellen
     # ========================================
     print("[2/6] Erstelle Benutzeroberfläche...")
+
+    fs_drv = lv.fs_drv_t()  # 1. Create the driver instance
+    fs_register(fs_drv, "S")  # 2. Register it with the letter "S"
+
     try:
         display.create_ui()
         print("✓ UI erstellt und initialisiert\n")

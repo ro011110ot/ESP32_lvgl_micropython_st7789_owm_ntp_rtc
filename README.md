@@ -1,15 +1,14 @@
 # ESP32 LVGL Weather Station
 
-This project transforms an ESP32 into a weather station using a ST7789 display with the LVGL graphics library. It fetches weather data from the OpenWeatherMap API, synchronizes time using NTP, and displays the information in a clean user interface.
+This project transforms an ESP32 into a weather station using a ST7789 display with the LVGL graphics library. It fetches weather data from the OpenWeatherMap API, synchronizes time using NTP, and displays the information in a clean user interface with weather icons.
 
 ## Features
 
 -   Connects to a Wi-Fi network using credentials from a `secrets.py` file.
 -   Synchronizes the Real-Time Clock (RTC) with an NTP server, including CET/CEST daylight saving adjustments.
 -   Fetches current weather data from OpenWeatherMap (temperature, pressure, humidity, wind, and description).
--   Displays the current date, time, and weather information on a 240x320 ST7789 TFT display.
+-   Displays the current date, time, and weather information, including weather icons, on a 240x320 ST7789 TFT display.
 -   Uses the LVGL library for a modern and responsive user interface.
--   Logs weather data periodically to a CSV file on the device's filesystem for historical tracking.
 -   Modular structure for easy maintenance and extension.
 
 ## File Descriptions
@@ -21,11 +20,9 @@ This project transforms an ESP32 into a weather station using a ST7789 display w
 -   **`ntp.py`**: Manages time synchronization with an NTP server and handles local time conversion (CET/CEST).
 -   **`weather.py`**: Fetches and parses weather data from the OpenWeatherMap API.
 -   **`display_setup.py`**: Initializes the ST7789 display driver and the underlying SPI bus for LVGL.
--   **`display.py`**: Manages the entire LVGL user interface, including creating widgets (labels) and updating them with new data.
+-   **`display.py`**: Manages the entire LVGL user interface, including creating widgets (labels, images) and updating them with new data.
 -   **`own_timers.py`**: Configures and starts hardware timers for periodic tasks like updating the display clock and fetching new weather data.
 -   **`system_tasks.py`**: Runs non-critical, periodic maintenance tasks, such as checking the Wi-Fi connection, using a non-blocking approach.
--   **`data_logger.py`**: Handles writing data (currently weather data) to a CSV log file in the `/temp_history` directory.
--   **`dht11.py`**: (Included but not used in the main flow) Module for reading data from a DHT11 sensor.
 
 ## Hardware Requirements
 
@@ -61,21 +58,12 @@ This project transforms an ESP32 into a weather station using a ST7789 display w
 5.  **Run:** The `main.py` script will run automatically on boot, starting the weather station.
 
 ## How it Works
-    secrets = {
-        "wifi_credentials": [
-            {"ssid": "YOUR_WIFI_SSID", "password": "YOUR_WIFI_PASSWORD"},
-            # {"ssid": "ANOTHER_SSID", "password": "ANOTHER_PASSWORD"},
-        ],
-        "openweather_api_key": "YOUR_OPENWEATHERMAP_API_KEY",
-        "city": "YourCity",
-        "country_code": "DE"  # Your two-letter country code
-    }
 The application starts with `main.py`, which orchestrates the setup process in several steps:
 1.  **Display Initialization**: `display_setup.init_display_driver()` sets up the SPI bus and the ST7789 driver.
-2.  **UI Creation**: `display.create_ui()` builds the LVGL interface, creating labels for time, date, and weather information.
+2.  **UI Creation**: `display.create_ui()` builds the LVGL interface, creating labels and images for time, date, and weather information.
 3.  **Wi-Fi Connection**: `wifi.connect_wifi()` establishes a connection to the internet.
 4.  **Time Sync**: If Wi-Fi is available, `ntp.set_rtc_from_ntp()` synchronizes the device's clock.
 5.  **Timers**: `own_timers.start_timer_tasks()` starts two hardware timers:
     -   A 1-second timer that calls `display.display_handler()` to update the clock on the screen and refresh the LVGL display.
-    -   A 15-minute timer that calls `weather_wrapper()` to fetch new weather data from the API and log it.
+    -   A 15-minute timer that calls `weather_wrapper()` to fetch new weather data from the API.
 6.  **Main Loop**: The application enters an infinite loop that continuously calls `lv.task_handler()` to process LVGL events and `run_system_tasks()` to perform background checks, ensuring the application remains responsive and stable.
