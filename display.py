@@ -133,7 +133,7 @@ def _create_status_section(parent):
     ui.desc_label.set_text("Loading...")
     ui.desc_label.set_style_text_color(lv.color_hex(COLOR_TEXT_SECONDARY), 0)
     ui.desc_label.align(lv.ALIGN.LEFT_MID, 10, 0)
-    ui.desc_label.set_long_mode(lv.label.LONG.WRAP)
+    ui.desc_label.set_long_mode(ui.desc_label.LONG_MODE.WRAP)
     ui.desc_label.set_width(140)
 
 
