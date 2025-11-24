@@ -53,9 +53,8 @@ def init_display_driver():
             reset_pin=_RST,
             reset_state=RESET_STATE_LOW,
             backlight_on_state=BL_STATE_HIGH,
-            color_byte_order=st7789.BYTE_ORDER_RGB,  # NEU: RGB statt BGR
-            rgb565_byte_swap=False,  # NEU: Byte-Tausch DEAKTIVIERT (False)
-            # Offsets und Geometrie (Bleibt)
+            color_byte_order=st7789.BYTE_ORDER_RGB,
+            rgb565_byte_swap=False,
             offset_x=0,
             offset_y=0,
         )
