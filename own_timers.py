@@ -1,59 +1,72 @@
 """
-Dieses Modul konfiguriert und startet die Hardware-Timer für periodische Aufgaben.
+This module configures and starts hardware timers for periodic tasks
+within the ESP32 LVGL Weather Station application.
 """
 
-# Third-Party
 from machine import Timer
 
-# Local Application
-import display  # NEU: Import des umbenannten Moduls
+import display
 import weather
 import wifi
 
 
 def weather_wrapper(timer):
     """
-    Timer-Callback zur periodischen Aktualisierung der Wetterdaten.
-    """
+    Timer callback for periodic weather data updates.
 
-    owm_data = (None,) * 7  # Jetzt 7 Werte (mit icon_code)
+    This function fetches weather data from the OpenWeatherMap API if Wi-Fi is connected,
+    then updates the display module with the new data and icon code.
+    It's designed to be called by a hardware timer.
+
+    Args:
+        timer: The timer object that triggered this callback (not directly used).
+    """
+    owm_data = (None,) * 7  # Initialize with 7 None values (including icon_code)
     icon_code = None
 
     if wifi.is_connected():
         print("Task: Fetching weather data from API...")
-        owm_data = weather.get_data()  # Gibt jetzt 7 Werte zurück
-
-        # Icon-Code extrahieren (letzter Wert im Tuple)
-        if owm_data and owm_data[6] is not None:
-            icon_code = owm_data[6]
-            owm_data = owm_data[:6]  # Nur die ersten 6 Werte für die Daten
-        else:
+        try:
+            owm_data = weather.get_data()  # This should return 7 values
+            # Extract icon code (last value in the tuple)
+            if owm_data and owm_data[6] is not None:
+                icon_code = owm_data[6]
+                owm_data = owm_data[:6]  # Keep only the first 6 values for data
+            else:
+                owm_data = (None,) * 6
+                icon_code = None  # Ensure no old icon code is used
+        except Exception as e:
+            print(f"ERROR: Failed to fetch weather data: {e}")
             owm_data = (None,) * 6
-            icon_code = None  # Sicherstellen, dass kein alter Icon-Code verwendet wird
+            icon_code = None
     else:
-        print("Task: Skipping weather data fetch, no WiFi.")
+        print("Task: Skipping weather data fetch, no WiFi connection.")
         owm_data = (None,) * 6
         icon_code = None
 
-    # Den Zustand des Display-Moduls mit den neuen Daten und dem Icon-Code aktualisieren
+    # Update the display module's state with the new data and icon code
     display.set_weather_data(owm_data, icon_code)
 
 
 def start_timer_tasks():
     """
-    Initialisiert und startet alle Hardware-Timer für die Anwendung.
+    Initializes and starts all hardware timers required for the application.
+
+    - A 1-second periodic timer for updating the LVGL display (time, weather).
+    - A 15-minute periodic timer for fetching new weather data.
     """
-    # Führt eine erste Datenabfrage sofort beim Start durch
+    # Perform an initial data fetch immediately upon startup
     print("Performing initial data fetch...")
     weather_wrapper(None)
 
-    # Timer zum AKTUALISIEREN der LVGL-Anzeige (jede Sekunde für die Uhrzeit)
+    # Timer for updating the LVGL display (every second for clock updates)
     display_timer = Timer(0)
-    # Aufruf an das umbenannte Modul
     display_timer.init(
         period=1000, mode=Timer.PERIODIC, callback=display.display_handler
     )
+    print("✓ Display update timer started (1s interval).")
 
-    # Timer zum Holen von Wetterdaten (alle 15 Minuten)
-    sensor_timer = Timer(1)
-    sensor_timer.init(period=900000, mode=Timer.PERIODIC, callback=weather_wrapper)
+    # Timer for fetching weather data (every 15 minutes)
+    weather_fetch_timer = Timer(1)
+    weather_fetch_timer.init(period=900000, mode=Timer.PERIODIC, callback=weather_wrapper)
+    print("✓ Weather fetch timer started (15min interval).")

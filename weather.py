@@ -1,15 +1,16 @@
 """
-Dieses Modul ist für das Abrufen und Verarbeiten von Wetterdaten von der OpenWeatherMap-API zuständig.
+This module is responsible for fetching and processing weather data from the OpenWeatherMap API.
 """
 
 import urequests
 
 from secrets import secrets
 
-# OpenWeatherMap API-Endpunkt und Konfiguration
-API_URL = "http://api.openweathermap.org/data/2.5/weather?q={},{}&appid={}&units=metric&lang=de"
+# OpenWeatherMap API endpoint and configuration
+# The API_URL is formatted with city, country code, API key, units (metric), and language (English).
+API_URL = "http://api.openweathermap.org/data/2.5/weather?q={},{}&appid={}&units=metric&lang=en"
 
-# API-Schlüssel und Standort aus der secrets.py-Datei
+# API key and location are loaded from the secrets.py file
 API_KEY = secrets["openweather_api_key"]
 CITY = secrets["city"]
 COUNTRY_CODE = secrets["country_code"]
@@ -17,15 +18,21 @@ COUNTRY_CODE = secrets["country_code"]
 
 def get_data():
     """
-    Ruft die aktuellen Wetterdaten von der OpenWeatherMap-API ab.
+    Fetches the current weather data from the OpenWeatherMap API.
+
+    Constructs the API request URL using the configured city, country code,
+    and API key. It then sends a GET request, parses the JSON response,
+    and extracts relevant weather information.
 
     Returns:
-        Ein Tuple mit den folgenden Wetterdaten:
-        (Temperatur, Luftdruck, Luftfeuchtigkeit, Windgeschwindigkeit, Wetterbeschreibung, Hauptwetter, Icon-Code).
-        Gibt (None, None, None, None, None, None, None) zurück, wenn ein Fehler auftritt.
+        A tuple containing the following weather data:
+        (temperature, pressure, humidity, wind_speed, description, main_weather, icon_code).
+        Returns (None, None, None, None, None, None, None) if an error occurs
+        during the API call or data parsing.
     """
     url = API_URL.format(CITY, COUNTRY_CODE, API_KEY)
 
+    response = None  # Initialize response to None
     try:
         print(f"Fetching weather data from: {url}")
         response = urequests.get(url)
@@ -33,7 +40,7 @@ def get_data():
         if response.status_code == 200:
             data = response.json()
 
-            # Extrahieren der relevanten Daten aus der JSON-Antwort
+            # Extract relevant data from the JSON response
             temp = data.get("main", {}).get("temp")
             pressure = data.get("main", {}).get("pressure")
             humidity = data.get("main", {}).get("humidity")
@@ -65,5 +72,5 @@ def get_data():
         print(f"An error occurred while fetching weather data: {e}")
         return (None,) * 7
     finally:
-        if "response" in locals() and response:
+        if response:
             response.close()
